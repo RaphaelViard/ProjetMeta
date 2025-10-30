@@ -1,5 +1,5 @@
 import numpy as np
-import read_pb
+import ../read_pb
 
 
 
@@ -92,7 +92,7 @@ def test_opening(n,m, fcosts, costs):
     return x,y
 
 
-def voisinage
+#def voisinage
 
 x,y = test_opening(n,m,fcosts,costs)
 #x,y = basic_feas(n,m)
