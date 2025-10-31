@@ -39,6 +39,18 @@ def test_opening(n,m, fcosts, costs):
             current_service_costs[changes_id] = costs[changes_id,j]
     return x,y
 
+def random_opening(n, m, fcosts, costs, p_open=0.5, seed=None):
+
+    if seed is not None:
+        np.random.seed(seed)
+    
+    y = np.random.rand(m) < p_open
+    if not np.any(y):
+        y[np.random.randint(0, m)] = True
+        x = np.zeros((n, m))
+    x = give_affectations(y, costs)
+    return x, y
+
 
 """Give all the neighbors of a couple x,y, as described in the report"""
 def neighborhood1(x, y, fcosts, costs):
@@ -54,8 +66,20 @@ def neighborhood1(x, y, fcosts, costs):
 def neighborhood2(x, y, fcosts, costs):
     n, m = x.shape
     neighbors = []
-
+    for i in range(m):
+        for j in range(i+1,m):
+            new_y = y.copy()
+            new_y[i] = 1-y[i]
+            new_y[j] = 1-y[j]
+            new_x = give_affectations(new_y, costs)
+        neighbors.append((new_x, new_y))
     return neighbors
+
+
+def all_neighbors(x, y, fcosts, costs):
+    neighbors1 = neighborhood1(x, y, fcosts, costs)
+    neighbors2 = neighborhood2(x, y, fcosts, costs)
+    return neighbors1 + neighbors2
 
 
 """Can find a local optimum, just improve the solution with the best neighbor"""
@@ -153,7 +177,7 @@ def Advanced_recuit(x, y, fcosts, costs, neighbors_function, verbose=False):
         if np.random.rand() < p:
             return new_x, new_y
         return x, y
-    if np.random.rand() < 0.98: # Dans le cas ou a des sol qui improvent et d'autrs qui n'improvent pas, faire : choisir une qui improve
+    if np.random.rand() < 0.6: # Dans le cas ou a des sol qui improvent et d'autrs qui n'improvent pas, faire : choisir une qui improve
 
         i = np.random.choice(improving)
         return neighbors[i][0], neighbors[i][1]
