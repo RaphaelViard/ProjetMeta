@@ -3,7 +3,7 @@ import read_pb
 
 
 def load_instance(f: str):
-    m, n, fcosts, caps, costs = read_pb.read_orlib_ufl("/ProjetMeta/uncap_data/" + f + ".txt")
+    m, n, fcosts, caps, costs = read_pb.read_orlib_ufl("/root/Projet_META/ProjetMeta/uncap_data/" + f + ".txt")
     return m,n, np.array(fcosts), np.array(caps), np.array(costs)
 
 
@@ -25,11 +25,4 @@ def is_feasible(x, y):
 
 
 def objective_function(x, y, fcosts, costs):
-    N,M = np.shape(x)
-    Sj = 0
-    for j in range(M):
-        Si = 0
-        for i in range(N):
-            Si +=  costs[i][j] * x[i][j]
-        Sj += Si + fcosts[j] * y[j]
-    return Sj
+    return np.sum(costs * x) + np.dot(fcosts, y)

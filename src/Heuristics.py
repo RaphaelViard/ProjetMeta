@@ -1,5 +1,6 @@
 import numpy as np
 from src.utils import *
+from itertools import combinations
 
 
 #Here we have all the heuristics, neighborhoods
@@ -58,7 +59,7 @@ def neighborhood1(x, y, fcosts, costs):
     neighbors = []
     for j in range(m):
         new_y = y.copy()
-        new_y[j] = 1-y[j]
+        new_y[j] = 1-y[j] # opening or closing
         new_x = give_affectations(new_y, costs)
         neighbors.append((new_x, new_y))
     return neighbors
@@ -69,11 +70,81 @@ def neighborhood2(x, y, fcosts, costs):
     for i in range(m):
         for j in range(i+1,m):
             new_y = y.copy()
-            new_y[i] = 1-y[i]
-            new_y[j] = 1-y[j]
+            new_y[i] = 1-y[i] # opening or closing
+            new_y[j] = 1-y[j] # opening or closing
             new_x = give_affectations(new_y, costs)
-        neighbors.append((new_x, new_y))
+            neighbors.append((new_x, new_y))
     return neighbors
+
+
+""" Voisinage avec une Distance de Hamming égale à k """
+def neighborhood3(x, y, fcosts, costs, k):
+    """
+    Génère les voisins en retournant k positions de y (indices strictement croissants).
+    Pour chaque voisin, recalcule x via give_affectations(new_y, costs).
+
+    Args:
+        x: matrice d'affectation courante (n, m) — non utilisée sauf pour dimensions
+        y: vecteur binaire de longueur m (ou matrice n×m si c’était ton design, voir note)
+        costs: matrice de coûts (n, m)
+        k: nombre de positions à flipper
+
+    Returns:
+        neighbors: liste de tuples (new_x, new_y)
+    """
+    n, m = x.shape
+    if not (1 <= k <= m):
+        return []
+
+    neighbors = []
+
+    for idxs in combinations(range(m), k):
+        new_y = y.copy()
+        l = list(idxs)
+        new_y[l] = 1 - new_y[l]
+        new_x = give_affectations(new_y, costs)
+        neighbors.append((new_x, new_y))
+
+
+    return neighbors
+
+""" k usines aléatoires inversées : donne un seul voisin dans le voisinage """
+def neighborhood3random(x, y, fcosts, costs, k):
+    n, m = x.shape
+    if not (1 <= k <= m):
+        return []
+
+    neighbors = []
+    new_y = y.copy()
+    #print(new_y)
+    
+    idxs = np.random.choice(m, k, replace=False)
+    #print(idxs)
+    new_y[list(idxs)] = 1 - new_y[list(idxs)]
+    #print(new_y)
+
+    new_x = give_affectations(new_y, costs)
+    neighbors.append((new_x, new_y))
+
+    return neighbors
+
+""" Voisinage avec une Distance de Hamming variant de 1 à p """
+def neighborhood4(x, y, fcosts, costs, p):
+    n, m = x.shape
+    if not (1 <= p <= m):
+        return []
+
+    neighbors = []
+    for k in range(p+1):
+        for idxs in combinations(range(m), k):
+            new_y = y.copy()
+
+            new_y[list(idxs)] = 1 - new_y[list(idxs)]
+
+            new_x = give_affectations(new_y, costs)
+            neighbors.append((new_x, new_y))
+    return neighbors
+
 
 
 def all_neighbors(x, y, fcosts, costs):
@@ -111,10 +182,72 @@ def Simple_search(x,y,fcosts, costs, neighbors_function, verbose=False):
     if verbose:
         print(f"Solution improved with a gap = {deltas[best_index]:.4f}")
     return best_x, best_y
+
+# Question 3
+
+
+""" Best Neighbor : find a local optimum among the neighborhood just improve the solution with the best neighbor using the neighborhood based on Hamming distance equal to k """
+def best_neighbor(x,y,fcosts, costs, k, verbose=False):
+    
+    neighbors = neighborhood3(x, y, fcosts, costs, k)
+
+    best_neighbor = (x,y)
+    best_value = objective_function(x, y, fcosts, costs)
+    #print("best_neighbor()")
+    #print(y)
+    #print(best_value)
+
+    for new_x, new_y in neighbors:
+        value = objective_function(new_x, new_y, fcosts, costs)
+        if value < best_value:
+            best_value = value
+            best_neighbor = (new_x, new_y)
+
+    if verbose:
+        print("Best Neighbor : ", best_neighbor)
+        print("Neightbor Value : ", best_value)
+
+    return best_neighbor[0], best_neighbor[1], best_value
+
+""" Descente : Meilleur voisin d'itération en itération pour une distance de Hamming égal à k donné """
+def descent(x,y,fcosts, costs, k):
+    ok = 1
+
+    cur_x, cur_y = x, y
+    cur_value = objective_function(x, y, fcosts, costs)
+
+    while ok == 1:
+        new_x, new_y, new_value = best_neighbor(cur_x, cur_y, fcosts, costs, k, False) 
+        if new_value != cur_value :
+            cur_x, cur_y = new_x, new_y
+            cur_value = new_value
+        else :
+            ok = 0
+    return cur_x, cur_y, cur_value
+
+""" Variable Neighborhood Descent by changing Hamming distance from 1 to p """
+def vns(x,y,fcosts, costs, p):
+    k = 1
+
+    cur_x, cur_y = x, y
+    cur_value = objective_function(x, y, fcosts, costs)
+
+    while k <= p:
+        new_x, new_y, new_value = best_neighbor(cur_x, cur_y, fcosts, costs, k, False)
+        if new_value != cur_value :
+            cur_x, cur_y = new_x, new_y
+            cur_value = new_value
+            k = 1
+        else :
+            k += 1
+    return cur_x, cur_y, cur_value
+
     
 
 
 
+
+# Question 4
 
 """Recuit dans lequel on choisit aléatoirement le voisin vers lequel on bouge, et T fixé à l'avance"""
 def random_recuit(x,y,fcosts, costs, neighbors_function, T, verbose=False):
