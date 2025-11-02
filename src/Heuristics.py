@@ -325,3 +325,118 @@ def Advanced_recuit(x, y, fcosts, costs, neighbors_function, verbose=False):
         if np.random.rand() < p:
             return new_x, new_y
         return x, y
+
+
+
+
+
+
+
+
+
+def random_neighbor(x, y, fcosts, costs, p):
+    k = np.random.randint(1, p + 1)
+
+    neighborhood = neighborhood3random(x, y, fcosts, costs, k)
+    neighbor = neighborhood[0]
+
+    return neighbor
+
+
+
+""" 
+x,y généré avec test_opening
+T > 0 et 0 < mu < 1 
+"""
+def simulated_annealing(x, y, fcosts, costs, p, T, mu, nb_iter, iter_max):
+    # Meilleur solution visitée
+    x_min = x
+    y_min = y
+    value_min = objective_function(x, y, fcosts, costs)
+
+    # Solution courante
+    x_cur = x
+    y_cur = y
+    value_cur = value_min
+
+    count = 0
+
+    while count < nb_iter:
+        for h in range(iter_max):
+            # Tire au sort un voisin de la solution courante
+            rd_neighbor = random_neighbor(x_cur, y_cur, fcosts, costs, p)
+            
+            x_neighbor, y_neighbor = rd_neighbor[0], rd_neighbor[1]
+            value_neighbor = objective_function(x_neighbor,y_neighbor,fcosts,costs)
+            
+            delta = value_neighbor - value_cur
+
+            if delta <= 0:
+                x_cur = x_neighbor
+                y_cur = y_neighbor
+                value_cur = value_neighbor
+
+                if value_cur < value_min:
+                    x_min = x_cur
+                    y_min = y_cur
+                    value_min = value_cur
+            else:
+                q = np.random.uniform(0, 1)
+                if q <= np.exp(- delta / T):
+                    x_cur = x_neighbor
+                    y_cur = y_neighbor
+                    value_cur = value_neighbor
+        T = mu * T
+        count += 1
+
+    return x_min,y_min,value_min
+
+
+
+def simulated_annealing2(x, y, fcosts, costs, p, T, mu, seuil, iter_max):
+    # Meilleur solution visitée
+    x_min = x
+    y_min = y
+    value_min = objective_function(x, y, fcosts, costs)
+
+    # Solution courante
+    x_cur = x
+    y_cur = y
+    value_cur = value_min
+
+    k = p
+
+    while T > seuil:
+        for h in range(iter_max):
+            
+            # Tire au sort un voisin de la solution courante
+            rd_neighbor = random_neighbor(x_cur, y_cur, fcosts, costs, k)
+            
+            x_neighbor, y_neighbor = rd_neighbor[0], rd_neighbor[1]
+            value_neighbor = objective_function(x_neighbor,y_neighbor,fcosts,costs)
+            
+            delta = value_neighbor - value_cur
+
+            if delta <= 0:
+                x_cur = x_neighbor
+                y_cur = y_neighbor
+                value_cur = value_neighbor
+
+                if value_cur < value_min:
+                    x_min = x_cur
+                    y_min = y_cur
+                    value_min = value_cur
+            else:
+                q = np.random.uniform(0, 1)
+                if q <= np.exp(- delta / T):
+                    x_cur = x_neighbor
+                    y_cur = y_neighbor
+                    value_cur = value_neighbor
+        T = mu * T
+
+    return x_min,y_min,value_min
+
+
+
+    
+
