@@ -2,7 +2,7 @@
 This project implements various metaheuristic methods to solve a resource allocation problem.
 It allows testing and comparing the performance of different algorithms on multiple problem instances.
 
-#2. Files & parameters
+## 2. Files & parameters
 
 For the classical descent, The file Test3 can be used, with the following parameters we can change:
 
