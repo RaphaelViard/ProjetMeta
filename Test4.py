@@ -5,14 +5,6 @@ import numpy as np
 import json
 import time
 
-"""
-start = time.time()
-end = time.time()
-
-.perf_counter()
-
-print(f"Temps d'exécution : {end - start:.3f} secondes")
-"""
 
 
 instance = "capc"
